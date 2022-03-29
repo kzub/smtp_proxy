@@ -6,20 +6,6 @@ function getAdress (conn) {
   return `${conn.remoteAddress}:${conn.remotePort}`;
 }
 
-function getSMTPcmd (line) {
-  return line.split(/\r\n|\s/).shift().toLowerCase();
-}
-
-// --------------------------------------------------------
-const connWrite = (conn, txt, end) => {
-  console.log(`SMTP_Proxy >>> ${txt}`);
-  if (end) {
-    conn.end(txt + '\r\n');
-  } else {
-    conn.write(txt + '\r\n');
-  }
-};
-
 // --------------------------------------------------------
 function addDefaultConnectionHandlers (conn) {
   conn.on('error', err => {
@@ -44,12 +30,20 @@ function forwardMail (conn) {
     mailServer.on('data', d => {
       let line = d.toString();
       console.log(`MAILSRV <<< ${line.slice(0, -1)}`); // slice -1 to remove \n
-      connWrite(conn, d);
-      console.log(`SMTP_Proxy >>> ${line.slice(0, -1)}`); // slice -1 to remove \n
+      conn.write(d);
+      // console.log(`SMTP_Proxy >>> ${line.slice(0, -1)}`); // slice -1 to remove \n
     });
 
     mailServer.on('close', () => {
-      conn.end();
+      try {
+        conn.end();
+      } catch(err) {
+        console.log(`MAILSRV --- ${getAdress(conn)} already closed`);
+      }
+    });
+
+    mailServer.on('error', (err) => {
+      console.log(`MAILSRV --- ERROR ${getAdress(conn)}: ${err}`);
     });
   });
 
@@ -57,7 +51,7 @@ function forwardMail (conn) {
     let lines = d.toString();
     console.log(`SMTP_Proxy <<< ${lines.slice(0, -1)}`); // slice -1 to remove \n
     lines = lines.replace(recepientRegExp, config.proxyToEmail);
-    connWrite(mailServer, lines);
+    mailServer.write(lines);
     console.log(`MAILSRV >>> ${lines.slice(0, -1)}`); // slice -1 to remove \n
   });
 
@@ -65,17 +59,31 @@ function forwardMail (conn) {
 }
 
 // --------------------------------------------------------
+function isSMTPcmd (cmd, lines) {
+  return lines.split(/\r\n/).filter(str => str.toLowerCase() == cmd).length > 0;
+}
+
+// --------------------------------------------------------
+const connWrite = (conn, txt, end) => {
+  console.log(`SMTP_Proxy >>> ${txt}`);
+  if (end) {
+    conn.end(txt + '\r\n');
+  } else {
+    conn.write(txt + '\r\n');
+  }
+};
+
+// --------------------------------------------------------
 function skipMail (conn) {
   connWrite(conn, `220 ${config.proxyToDomain} SMTP OTT`);
   conn.on('data', d => {
-    let line = d.toString();
-    console.log(`SMTP_Proxy <<< ${line.slice(0, -1)}`); // slice -1 to remove \n
-    let cmd = getSMTPcmd(line);
+    let lines = d.toString();
+    console.log(`SMTP_Proxy <<< ${lines.slice(0, -1)}`); // slice -1 to remove \n
 
-    if (cmd == 'data') {
+    if (isSMTPcmd('data', lines)) {
       connWrite(conn, '354 ready');
     }
-    else if (cmd == 'quit') {
+    else if (isSMTPcmd('quit', lines)) {
       connWrite(conn, '221 Bye', true);
     }
     else {
