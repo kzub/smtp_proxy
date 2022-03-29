@@ -9,7 +9,7 @@ function getAdress (conn) {
 // --------------------------------------------------------
 function addDefaultConnectionHandlers (conn) {
   conn.on('error', err => {
-    console.log(`SMTP_Proxy === ERROR ${getAdress(conn)}: ${err}`);
+    console.log(`SMTP_Proxy === ERROR ${getAdress(conn)}:`, err);
   });
 
   conn.on('close', () => {
@@ -43,7 +43,7 @@ function forwardMail (conn) {
     });
 
     mailServer.on('error', (err) => {
-      console.log(`MAILSRV === ERROR ${getAdress(conn)}: ${err}`);
+      console.log(`MAILSRV === ERROR ${getAdress(conn)}:`, err);
     });
   });
 
