@@ -64,34 +64,20 @@ function isSMTPcmd (cmd, lines) {
 }
 
 // --------------------------------------------------------
-const connWrite = (conn, txt, end) => {
-  // console.log(`SMTP_Proxy >>> ${txt}`);
-  if (end) {
-    try {
-      conn.end(txt + '\r\n');
-    } catch(err) {
-      console.log(`SMTP_Proxy === ${getAdress(conn)} already closed`);
-    }
-  } else {
-    conn.write(txt + '\r\n');
-  }
-};
-
-// --------------------------------------------------------
 function skipMail (conn) {
-  connWrite(conn, `220 ${config.proxyToDomain} SMTP OTT`);
+  conn.write(`220 ${config.proxyToDomain} SMTP OTT\r\n`);
   conn.on('data', d => {
     let lines = d.toString();
     // console.log(`SMTP_Proxy <<< ${lines.slice(0, -1)}`); // slice -1 to remove \n
 
     if (isSMTPcmd('data', lines)) {
-      connWrite(conn, '354 ready');
+      conn.write('354 ready\r\n');
     }
     else if (isSMTPcmd('quit', lines)) {
-      connWrite(conn, '221 Bye', true);
+      conn.end();
     }
     else {
-      connWrite(conn, '250 ok');
+      conn.write('250 ok\r\n');
     }
   });
 
