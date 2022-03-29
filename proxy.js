@@ -60,7 +60,7 @@ function forwardMail (conn) {
 
 // --------------------------------------------------------
 function isSMTPcmd (cmd, lines) {
-  return lines.split(/\r\n/).filter(str => str.toLowerCase() == cmd).length > 0;
+  return lines.split(/\r\n/).filter(str => str.toLowerCase().indexOf(cmd) == 0).length > 0;
 }
 
 // --------------------------------------------------------
