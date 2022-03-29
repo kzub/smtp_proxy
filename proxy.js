@@ -66,19 +66,22 @@ function isSMTPcmd (cmd, lines) {
 // --------------------------------------------------------
 function skipMail (conn) {
   conn.write(`220 ${config.proxyToDomain} SMTP OTT\r\n`);
+  let dataStarted = false;
   conn.on('data', d => {
     let lines = d.toString();
-    console.log(`SMTP_Proxy <<< ${lines}`);
+    // console.log(`SMTP_Proxy <<< ${lines}`);
 
     if (isSMTPcmd('data', lines)) {
       conn.write('354 ready\r\n');
+      dataStarted = true;
     }
     else if (isSMTPcmd('quit', lines)) {
       conn.end();
     }
-    else {
+    else if(!dataStarted) {
       conn.write('250 ok\r\n');
     }
+    // do nothing
   });
 
   addDefaultConnectionHandlers(conn);
