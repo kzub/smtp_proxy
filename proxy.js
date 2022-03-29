@@ -25,7 +25,7 @@ const recepientRegExp = new RegExp(config.proxyEmail, 'ig');
 
 // --------------------------------------------------------
 function forwardMail (conn) {
-  console.log(`SMTP_Proxy === connecting to ${config.mailServerHost}:${config.mailServerPort}`);
+  // console.log(`SMTP_Proxy === connecting to ${config.mailServerHost}:${config.mailServerPort}`);
   const mailServer = net.createConnection(config.mailServerPort, config.mailServerHost, () => {
     mailServer.on('data', d => {
       // let line = d.toString();
