@@ -66,6 +66,7 @@ function forwardMail (conn) {
 
 // --------------------------------------------------------
 function skipMail (conn) {
+  connWrite(conn, `220 ${config.proxyToDomain} SMTP OTT`);
   conn.on('data', d => {
     let line = d.toString();
     console.log(`SMTP_Proxy <<< ${line.slice(0, -1)}`); // slice -1 to remove \n
@@ -88,8 +89,6 @@ function skipMail (conn) {
 // --------------------------------------------------------
 function chooseForwarding (conn) {
   console.log(`SMTP_Proxy --- client ${getAdress(conn)} connected`);
-  connWrite(conn, `220 ${config.proxyToDomain} SMTP OTT`);
-
   if (Math.random() <= (config.forwardingPercent/100)) {
     return forwardMail(conn);
   }
