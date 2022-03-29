@@ -67,7 +67,11 @@ function isSMTPcmd (cmd, lines) {
 const connWrite = (conn, txt, end) => {
   // console.log(`SMTP_Proxy >>> ${txt}`);
   if (end) {
-    conn.end(txt + '\r\n');
+    try {
+      conn.end(txt + '\r\n');
+    } catch(err) {
+      console.log(`SMTP_Proxy === ${getAdress(conn)} already closed`);
+    }
   } else {
     conn.write(txt + '\r\n');
   }
