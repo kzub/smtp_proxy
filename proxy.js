@@ -68,7 +68,7 @@ function skipMail (conn) {
   conn.write(`220 ${config.proxyToDomain} SMTP OTT\r\n`);
   conn.on('data', d => {
     let lines = d.toString();
-    // console.log(`SMTP_Proxy <<< ${lines.slice(0, -1)}`); // slice -1 to remove \n
+    console.log(`SMTP_Proxy <<< ${lines}`);
 
     if (isSMTPcmd('data', lines)) {
       conn.write('354 ready\r\n');
