@@ -78,6 +78,10 @@ function skipMail (conn) {
     else if (isSMTPcmd('quit', lines)) {
       conn.end();
     }
+    else if (lines == '.\r\n'){
+      conn.write('250 ok\r\n');
+      dataStarted = false;
+    }
     else if(!dataStarted) {
       conn.write('250 ok\r\n');
     }
