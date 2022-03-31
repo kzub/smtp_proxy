@@ -30,15 +30,15 @@ function forwardMail (conn) {
     mailServer.on('data', d => {
       // let line = d.toString();
       // console.log(`MAILSRV <<< ${line.slice(0, -1)}`); // slice -1 to remove \n
-      conn.write(d);
+      if(conn.readyState === "open") {
+        conn.write(d);
+      }
       // console.log(`SMTP_Proxy >>> ${line.slice(0, -1)}`); // slice -1 to remove \n
     });
 
     mailServer.on('close', () => {
-      try {
+      if(conn.readyState === "open") {
         conn.end();
-      } catch(err) {
-        console.log(`MAILSRV === ${getAdress(conn)} already closed`);
       }
     });
 
