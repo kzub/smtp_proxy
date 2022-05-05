@@ -22,10 +22,10 @@ function formatLine(line) {
   if (!line) {
     return line;
   }
-  if (line.length < 80) {
+  if (line.length <= 100) {
     return `(${line.length}) [${removeNewLines(line)}]`;
   }
-  return `(${line.length}) [${removeNewLines(line.slice(0, 30))} ... ${removeNewLines(line.slice(-30))}]`
+  return `(${line.length}) [${removeNewLines(line.slice(0, 70))} ... ${removeNewLines(line.slice(-20))}]`
 }
 
 // --------------------------------------------------------
@@ -82,14 +82,14 @@ function forwardMail (conn) {
     let line = d.toString();
     mylog(`SMTP_Proxy <<< ${getAdress(conn)}: ${formatLine(line)}`);
     if (isSMTPcmd('starttls', line)) {
-      mylog(`SMTP_Proxy >>> ${getAdress(conn)}: TLS not supported`);
+      mylog(`SMTP_Proxy >>> ${getAdress(conn)}: 454 TLS not supported`);
       conn.write('454 TLS not available due to temporary reason\r\n');
       return;
     }
     let newline = line.replace(recepientRegExp, config.proxyToEmail);
     if (newline !== line) {
-      mylog(`MAILSRV <<< (...) ${getAdress(conn)}: replaced length: ${line.length}`);
-      mailServer.write(line);
+      mylog(`MAILSRV <<< ${getAdress(conn)}: replaced: ${formatLine(newline)}`);
+      mailServer.write(newline);
     } else {
       mylog(`MAILSRV <<< (...) ${getAdress(conn)}: no replace`);
       mailServer.write(d);
@@ -109,11 +109,12 @@ function skipMail (conn) {
     mylog(`SMTP_Proxy <<< ${getAdress(conn)}: ${formatLine(line)}`);
 
     if (isSMTPcmd('data', line)) {
+      mylog(`SMTP_Proxy >>> ${getAdress(conn)}: 354 ready`);
       conn.write('354 ready\r\n');
       dataStarted = true;
     }
     else if (isSMTPcmd('starttls', line)) {
-      mylog(`SMTP_Proxy >>> ${getAdress(conn)}: TLS not supported`);
+      mylog(`SMTP_Proxy >>> ${getAdress(conn)}: 454 TLS not supported`);
       conn.write('454 TLS not available due to temporary reason\r\n');
       return;
     }
@@ -121,14 +122,17 @@ function skipMail (conn) {
       mylog(`SMTP_Proxy >>> ${getAdress(conn)}: connection end`);
       conn.end('221 Bye\r\n');
     }
-    else if (line == '.\r\n'){
+    else if (line.slice(-3) == '.\r\n'){
+      mylog(`SMTP_Proxy >>> ${getAdress(conn)}: 250 ok`);
       conn.write('250 ok\r\n');
       dataStarted = false;
     }
     else if(!dataStarted) {
+      mylog(`SMTP_Proxy >>> ${getAdress(conn)}: 250 ok`);
       conn.write('250 ok\r\n');
     }
     else {
+      mylog(`SMTP_Proxy >>> ${getAdress(conn)}: do nothing...`);
       // data is going...
       // do nothing
     }
